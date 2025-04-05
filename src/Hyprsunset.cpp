@@ -53,13 +53,21 @@ int CHyprsunset::calculateMatrix() {
         return 0;
     }
 
-    if (!identity)
-        Debug::log(NONE, "┣ Setting the temperature to {}K{}\n┃", KELVIN, kelvinSet ? "" : " (default)");
-    else
-        Debug::log(NONE, "┣ Resetting the matrix (--identity passed)\n┃", KELVIN, kelvinSet ? "" : " (default)");
-
     // calculate the matrix
-    state.ctm = identity ? Mat3x3::identity() : matrixForKelvin(KELVIN);
+    switch (mode) {
+        case CM_DEFAULT:
+        case CM_KELVIN:
+            Debug::log(NONE, "┣ Setting the temperature to {}K{}\n┃", KELVIN, mode == CM_DEFAULT ? " (default)" : "");
+            state.ctm = matrixForKelvin(KELVIN);
+            MATRIX    = state.ctm;
+            break;
+        case CM_IDENTITY:
+            Debug::log(NONE, "┣ Resetting the matrix (--identity passed)\n┃");
+            state.ctm = Mat3x3::identity();
+            MATRIX    = state.ctm;
+            break;
+        case CM_MATRIX: state.ctm = MATRIX; break;
+    }
     state.ctm.multiply(std::array<float, 9>{GAMMA, 0, 0, 0, GAMMA, 0, 0, 0, GAMMA});
 
     Debug::log(NONE, "┣ Calculated the CTM to be {}\n┃", state.ctm.toString());
@@ -87,7 +95,7 @@ int CHyprsunset::init() {
         const std::string IFACE = interface;
 
         if (IFACE == hyprland_ctm_control_manager_v1_interface.name) {
-						auto targetVersion = std::min(version, 2u);
+            auto targetVersion = std::min(version, 2u);
 
             Debug::log(NONE, "┣ Found hyprland-ctm-control-v1 supported with version {}, binding to v{}", version, targetVersion);
             state.pCTMMgr = makeShared<CCHyprlandCtmControlManagerV1>(
@@ -156,4 +164,19 @@ void CHyprsunset::tick() {
 
         wl_display_flush(state.wlDisplay);
     }
+}
+
+void CHyprsunset::parseMatrix(std::string str) {
+    std::array<float, 9> matrix = g_pHyprsunset->MATRIX.getMatrix();
+    for (int j = 0; j < 9; ++j) {
+        try {
+            matrix[j] = std::stof(str);
+        } catch (std::exception& e) {}
+        std::string::size_type pos = str.find(',');
+        if (pos == std::string::npos)
+            break;
+        str = str.substr(pos + 1);
+    }
+    g_pHyprsunset->MATRIX = Mat3x3(matrix);
+    g_pHyprsunset->mode   = CM_MATRIX;
 }

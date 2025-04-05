@@ -34,12 +34,20 @@ struct SState {
     Mat3x3                            ctm;
 };
 
+enum ColorMode {
+    CM_DEFAULT,
+    CM_KELVIN,
+    CM_IDENTITY,
+    CM_MATRIX,
+};
+
 class CHyprsunset {
   public:
     float              MAX_GAMMA = 1.0f; // default
     float              GAMMA     = 1.0f; // default
     unsigned long long KELVIN    = 6000; // default
-    bool               kelvinSet = false, identity = false;
+    Mat3x3             MATRIX    = Mat3x3::identity();
+    ColorMode          mode      = CM_DEFAULT;
     SState             state;
     std::mutex         m_mtTickMutex;
 
@@ -47,6 +55,7 @@ class CHyprsunset {
     int                applySettings();
     int                init();
     void               tick();
+    void               parseMatrix(std::string);
 
   private:
     static void commitCTMs();

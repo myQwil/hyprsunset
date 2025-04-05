@@ -6,6 +6,7 @@ static void printHelp() {
     Debug::log(NONE, "┣ --gamma_max             →  Set the maximum display gamma (default 100%, maximum 200%)");
     Debug::log(NONE, "┣ --temperature       -t  →  Set the temperature in K (default 6000)");
     Debug::log(NONE, "┣ --identity          -i  →  Use the identity matrix (no color change)");
+    Debug::log(NONE, "┣ --matrix            -m  →  Set the color matrix");
     Debug::log(NONE, "┣ --help              -h  →  Print this info");
     Debug::log(NONE, "╹");
 }
@@ -23,8 +24,8 @@ int main(int argc, char** argv, char** envp) {
             }
 
             try {
-                g_pHyprsunset->KELVIN    = std::stoull(argv[i + 1]);
-                g_pHyprsunset->kelvinSet = true;
+                g_pHyprsunset->KELVIN = std::stoull(argv[i + 1]);
+                g_pHyprsunset->mode   = CM_KELVIN;
             } catch (std::exception& e) {
                 Debug::log(NONE, "✖ Temperature {} is not valid", argv[i + 1]);
                 return 1;
@@ -60,7 +61,16 @@ int main(int argc, char** argv, char** envp) {
 
             ++i;
         } else if (argv[i] == std::string{"-i"} || argv[i] == std::string{"--identity"}) {
-            g_pHyprsunset->identity = true;
+            g_pHyprsunset->mode = CM_IDENTITY;
+        } else if (argv[i] == std::string{"-m"} || argv[i] == std::string{"--matrix"}) {
+            if (i + 1 >= argc) {
+                Debug::log(NONE, "✖ No matrix provided for {}", argv[i]);
+                return 1;
+            }
+
+            g_pHyprsunset->parseMatrix(argv[i + 1]);
+
+            ++i;
         } else if (argv[i] == std::string{"-h"} || argv[i] == std::string{"--help"}) {
             printHelp();
             return 0;
