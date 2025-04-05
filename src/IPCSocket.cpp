@@ -40,7 +40,10 @@ void CIPCSocket::initialize() {
 
         strcpy(SERVERADDRESS.sun_path, socketPath.c_str());
 
-        bind(SOCKET, (sockaddr*)&SERVERADDRESS, SUN_LEN(&SERVERADDRESS));
+        if (bind(SOCKET, (sockaddr*)&SERVERADDRESS, SUN_LEN(&SERVERADDRESS)) != 0) {
+            Debug::log(ERR, "Couldn't bind socket to server");
+            return;
+        }
 
         // 10 max queued.
         listen(SOCKET, 10);
