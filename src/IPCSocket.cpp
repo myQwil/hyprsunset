@@ -174,13 +174,24 @@ bool CIPCSocket::mainThreadParseRequest() {
             return false;
         }
 
-        g_pHyprsunset->KELVIN   = kelvin;
-        g_pHyprsunset->identity = false;
+        g_pHyprsunset->KELVIN = kelvin;
+        g_pHyprsunset->mode   = CM_KELVIN;
         return true;
     }
 
     if (copy.find("identity") == 0) {
-        g_pHyprsunset->identity = true;
+        g_pHyprsunset->mode = CM_IDENTITY;
+        return true;
+    }
+
+    if (copy.find("matrix") == 0) {
+        int spaceSeparator = copy.find_first_of(' ');
+        if (spaceSeparator == -1) {
+            m_szReply = g_pHyprsunset->MATRIX.toString();
+            return false;
+        }
+
+        g_pHyprsunset->parseMatrix(copy.substr(spaceSeparator + 1));
         return true;
     }
 
